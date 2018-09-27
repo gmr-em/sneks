@@ -19,12 +19,14 @@ public class Player : MonoBehaviour {
     private List<GameObject> body; // array for all the body pieces; used to allow tail to follow leader
     public float maxDist = 0.3f;
 
+    private bool ate = false;
+ 
     void Start()
     {
         body = new List<GameObject>();
         int i = 0;
         // add an initial number of body parts 
-        while (i++ < 15)
+        while (i++ < 5)
         {
             GameObject instance = Instantiate(tail, head.GetComponent<Transform>().position, Quaternion.identity) as GameObject;
             body.Add(instance);
@@ -36,19 +38,34 @@ public class Player : MonoBehaviour {
     // moves the head of the snake and teleports the last body piece in its previous position
     void Move()
     {
-        float rotate = Input.GetAxis("Horizontal");      
+        float rotate = Input.GetAxis("Horizontal");
 
-        // Move last Tail Element to where the Head was
+        // get current position of the head
         Vector3 headPosition = head.GetComponent<Transform>().position;
-        body.Last().GetComponent<Transform>().position = headPosition;
 
-        // Add to front of list, remove from the back
-        body.Insert(0, body.Last());
-        body.RemoveAt(body.Count - 1);
+        if (ate)
+        {
+            // if food has been eaten after last movement then we add a new body part instead of moving the last element
+            GameObject newBody = Instantiate(tail, headPosition, Quaternion.identity) as GameObject;
+            body.Insert(0, newBody);
+            ate = false;
+        }
+        else
+        {
+            // Move last Tail Element to where the Head was            
+            body.Last().GetComponent<Transform>().position = headPosition;
 
+            // Add to front of list, remove from the back
+            body.Insert(0, body.Last());
+            body.RemoveAt(body.Count - 1);
+        }
+
+        // rotate head if key was pressed
         head.GetComponent<Transform>().Rotate(new Vector3(0, rotate * rotationSpeed, 0));
+        // move head forwards (based on rotation)
         headPosition += head.GetComponent<Transform>().forward * speed;
 
+        // teleport head to other side if it goes beyond the margins
         if (headPosition.z > topMargin)
         {
             headPosition.z = bottomMargin;
@@ -68,5 +85,33 @@ public class Player : MonoBehaviour {
         }
 
         head.GetComponent<Transform>().position = headPosition;
-    }    
+    }
+
+    void OnTriggerEnter(Collider coll)
+    {
+        // Food?
+        if (coll.gameObject.CompareTag("Food"))
+        {
+            // Get longer in next Move call
+            ate = true;
+
+            // Remove the Food
+            Destroy(coll.gameObject);
+        }
+        // Collided with Tail or Border or other Snakes
+        else
+        {
+            // ToDo 'You lose' screen
+            Debug.Log("Dead...");
+            if (body.Count > 7)
+            {
+                int i = 0;
+                while (i++ < 5)
+                {
+                    Destroy(body.Last());
+                    body.RemoveAt(body.Count - 1);
+                }
+            }
+        }
+    }
 }
