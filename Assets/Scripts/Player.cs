@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using System.Linq;
 
 public class Player : MonoBehaviour {
@@ -10,6 +11,8 @@ public class Player : MonoBehaviour {
 
     public GameObject head; // the head GO
     public GameObject tail; // the tail GO
+
+    public Text scoreText;
 
     public float topMargin = 5;
     public float bottomMargin = -5;
@@ -49,6 +52,9 @@ public class Player : MonoBehaviour {
             GameObject newBody = Instantiate(tail, headPosition, Quaternion.identity) as GameObject;
             body.Insert(0, newBody);
             ate = false;
+
+            // increase Score if we eat
+            scoreText.text = "Score: " + body.Count;
         }
         else
         {
@@ -110,6 +116,7 @@ public class Player : MonoBehaviour {
                 {
                     Destroy(body.Last());
                     body.RemoveAt(body.Count - 1);
+
                 }
             }
         }
